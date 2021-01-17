@@ -1,2 +1,2 @@
-# wfc-sudoku
-Experimenting with wave function collapse algorithms via Sudoku solver implementation.
+# wfc-stuff
+Experimenting with wave function collapse algorithms.
