@@ -1,0 +1,14 @@
+{
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.pug$",
+        "cmd": "pug ${file}"
+      },
+      {
+        "match": "\\.styl$",
+        "cmd": "stylus -u autoprefixer-stylus -c ${file}"
+      }
+    ]
+  }
+}
