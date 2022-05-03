@@ -4,6 +4,7 @@ class WFC {
     this.q = q
     this.grid = WFC.superPos(this.n)
     this.history = []
+    this.guesses = []
   }
 
   static superPos(n){
@@ -25,7 +26,7 @@ class WFC {
   }
 
   get least(){
-    return _.min(this.grid.map(xs=> _.min(xs.map(ys=> ys.length).filter(a=> a != 1))))
+    return _.min(this.grid.map(xs=> _.min(_.without(xs.map(ys=> ys.length), 1))))
   }
 
   get solved(){
@@ -52,10 +53,19 @@ class WFC {
     }
   }
 
-  pick(i, j){
-    if(i === undefined) i = _.random(this.n)
-    if(j === undefined) j = _.random(this.n)
-    this.alt([_.sample(this.at(i, j))], i, j)
+  guessed(i, j){
+    return this.guesses.filter(([v, a, b])=> a == i && b == j).map(([v])=> v)
+  }
+
+  canded(i, j){
+    return _.difference(this.at(i, j), this.guessed(i, j))
+  }
+
+  pick(cands){
+    let [i, j] = _.sample(cands)
+    let v = _.sample(this.canded(i, j))
+    this.alt([v], i, j)
+    this.guesses.unshift([v, i, j])
     this.propagate()
   }
 
@@ -66,8 +76,7 @@ class WFC {
       this.each((v, i, j)=>{
         if(v.length == t) cands.push([i, j])
       })
-
-      this.pick(..._.sample(cands))
+      this.pick(cands.filter(c=> this.canded(...c)))
       return true
     }
     if(!this.solved) this.back()
@@ -75,12 +84,8 @@ class WFC {
   }
 
   check(i, j){
-    if(this.grid[i][j].length > 1){
-      let taken = {}
-      for(let xs of [...this.row(i), ...this.col(j), ...this.sq(i, j)]){
-        if(xs.length == 1) taken[xs[0]] = true
-      }
-      this.alt(this.at(i, j).filter(a=> !(a in taken)), i, j)
+    if(this.at(i, j).length > 1){
+      this.alt(_.difference(this.at(i, j), ...[...this.row(i), ...this.col(j), ...this.sq(i, j)].filter(xs=> xs.length == 1)), i, j)
     }
   }
 
@@ -89,11 +94,17 @@ class WFC {
       this.check(i, j)
     })
 
-    this.history.unshift(_.cloneDeep(this.grid))
+    this.history.unshift({
+      grid: _.cloneDeep(this.grid),
+      guesses: _.cloneDeep(this.guesses)
+    })
   }
 
   back(){
-    while(!this.ok) this.grid = this.history.shift()
+    if(this.history.length){
+      this.grid = this.history.shift().grid
+      this.guesses = this.history.shift().guesses
+    }
   }
 
   get pretty(){
