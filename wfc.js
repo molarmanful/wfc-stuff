@@ -12,6 +12,15 @@ class WFC {
     return [...new Array(n)].map(a=> [...new Array(n)].map(b=> _.range(1, n + 1)))
   }
 
+  load(g){
+    this.grid = _.merge(WFC.superPos(this.n), g)
+    this.each((v, i, j)=>{
+      if(!v.pop) this.alt([v], i, j)
+    })
+    this.propagate()
+    this.history = []
+  }
+
   row(n){
     return this.grid[n]
   }
@@ -71,17 +80,21 @@ class WFC {
   }
 
   observe(){
-    let cands = []
-    let t = this.least
-    if(!this.solved && this.ok){
-      this.each((v, i, j)=>{
-        if(v.length == t && this.canded(i, j).length) cands.push([i, j])
-      })
-      cands = cands.filter(c=> this.canded(...c))
-      if(cands.length) this.pick(cands)
-      else this.back()
+    if(!this.solved){
+      if(!this.ok){
+        this.back()
+      }
+      else {
+        let cands = []
+        let t = this.least
+        this.each((v, i, j)=>{
+          if(v.length == t && this.canded(i, j).length) cands.push([i, j])
+        })
+        cands = cands.filter(c=> this.canded(...c))
+        if(cands.length) this.pick(cands)
+        else this.back()
+      }
     }
-    else if(!this.solved) this.back()
   }
 
   check(i, j){
@@ -97,15 +110,19 @@ class WFC {
 
     this.history.unshift({
       grid: _.cloneDeep(this.grid),
-      guess: _.clone(this.guess)
+      guess: _.clone(this.guess),
+      elims: _.cloneDeep(this.elims)
     })
   }
 
   back(){
     if(this.history.length){
       let h = this.history.shift()
-      this.grid = h.grid
-      this.elims.unshift(h.guess)
+      if(h.guess.length){
+        this.grid = h.grid
+        this.elims = [... h.elims, h.guess]
+      }
+      else this.back()
     }
   }
 
