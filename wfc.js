@@ -4,7 +4,8 @@ class WFC {
     this.q = q
     this.grid = WFC.superPos(this.n)
     this.history = []
-    this.guesses = []
+    this.guess = []
+    this.elims = []
   }
 
   static superPos(n){
@@ -53,19 +54,19 @@ class WFC {
     }
   }
 
-  guessed(i, j){
-    return this.guesses.filter(([v, a, b])=> a == i && b == j).map(([v])=> v)
+  elimd(i, j){
+    return this.elims.filter(([v, a, b])=> a == i && b == j).map(([v])=> v)
   }
 
   canded(i, j){
-    return _.difference(this.at(i, j), this.guessed(i, j))
+    return _.difference(this.at(i, j), this.elimd(i, j))
   }
 
   pick(cands){
     let [i, j] = _.sample(cands)
     let v = _.sample(this.canded(i, j))
     this.alt([v], i, j)
-    this.guesses.unshift([v, i, j])
+    this.guess = [v, i, j]
     this.propagate()
   }
 
@@ -74,13 +75,13 @@ class WFC {
     let t = this.least
     if(!this.solved && this.ok){
       this.each((v, i, j)=>{
-        if(v.length == t) cands.push([i, j])
+        if(v.length == t && this.canded(i, j).length) cands.push([i, j])
       })
-      this.pick(cands.filter(c=> this.canded(...c)))
-      return true
+      cands = cands.filter(c=> this.canded(...c))
+      if(cands.length) this.pick(cands)
+      else this.back()
     }
-    if(!this.solved) this.back()
-    return false
+    else if(!this.solved) this.back()
   }
 
   check(i, j){
@@ -96,14 +97,15 @@ class WFC {
 
     this.history.unshift({
       grid: _.cloneDeep(this.grid),
-      guesses: _.cloneDeep(this.guesses)
+      guess: _.clone(this.guess)
     })
   }
 
   back(){
     if(this.history.length){
-      this.grid = this.history.shift().grid
-      this.guesses = this.history.shift().guesses
+      let h = this.history.shift()
+      this.grid = h.grid
+      this.elims.unshift(h.guess)
     }
   }
 
