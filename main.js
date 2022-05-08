@@ -9,10 +9,11 @@ let step = e=>{
   $('#out').html(wfc.pretty)
 }
 
-let reset = e=>{
+$('#full').on('click', e=>{
   clearInterval(int)
-  wfc = new WFC()
-}
+  while(!wfc.solved) wfc.observe()
+  $('#out').html(wfc.pretty)
+})
 
 $('#play').on('click', e=>{
   int = setInterval(step, 50)
@@ -24,13 +25,14 @@ $('#next').on('click', e=>{
 })
 
 $('#reset').on('click', e=>{
-  reset()
+  clearInterval(int)
+  wfc = new WFC()
   $('#out').html(wfc.pretty)
 })
 
 $('#import').on('click', e=>{
-  reset()
-
+  clearInterval(int)
+  wfc = new WFC()
   let g = $('#code').val().split(/\n+/).map(a=> a.split(/\s*/).map(b=> +b || undefined))
 
   wfc.load(g)

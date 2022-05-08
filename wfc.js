@@ -3,9 +3,11 @@ class WFC {
     this.n = n
     this.q = q
     this.grid = WFC.superPos(this.n)
+    this.pgrid = this.grid
     this.history = []
     this.guess = []
     this.elims = []
+    this.lvl = 0
   }
 
   static superPos(n){
@@ -85,6 +87,8 @@ class WFC {
         this.back()
       }
       else {
+        this.pgrid = _.cloneDeep(this.grid)
+
         let cands = []
         let t = this.least
         this.each((v, i, j)=>{
@@ -109,24 +113,31 @@ class WFC {
     })
 
     this.history.unshift({
-      grid: _.cloneDeep(this.grid),
+      grid: _.cloneDeep(this.pgrid),
       guess: _.clone(this.guess),
-      elims: _.cloneDeep(this.elims)
+      elims: _.cloneDeep(this.elims),
+      lvl: this.lvl++
     })
+
+    this.elims = []
   }
 
   back(){
     if(this.history.length){
       let h = this.history.shift()
-      if(h.guess.length){
-        this.grid = h.grid
-        this.elims = [... h.elims, h.guess]
-      }
-      else this.back()
+      this.grid = h.grid
+      this.elims = [...h.elims, h.guess]
+      this.lvl = h.lvl
     }
   }
 
   get pretty(){
-    return this.grid.map(xs=> xs.map(ys=> ys.length <= 1 ? ` ${ys.length ? `<span class="green">${ys[0]}</span>` : '<span class="red">X</span>'} ` : `<span class="gray">[${ys.length}]</span>`).join``).join`\n`
+    return this.grid.map((xs, i)=> xs.map((ys, j)=>
+      ys.length <= 1 ?
+        ` ${ys.length ? `<span class="${
+          !this.solved && this.guess.length && i == this.guess[1] && j == this.guess[2] ? 'blue' : 'green'
+        }">${ys[0]}</span>` : '<span class="red">X</span>'} `
+      : `<span class="gray">[${ys.length}]</span>`
+    ).join``).join`\n`
   }
 }
